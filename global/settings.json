@@ -1,0 +1,101 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+
+      "Write(./analysis/*)",
+      "Write(./reports/*)",
+      "Write(./exports/*)",
+
+      "Bash(mkdir *)",
+      "Bash(ls *)",
+      "Bash(cat *)",
+      "Bash(echo *)",
+      "Bash(printf *)",
+      "Bash(grep *)",
+      "Bash(rg *)",
+      "Bash(find *)",
+      "Bash(file *)",
+      "Bash(stat *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(less *)",
+      "Bash(awk *)",
+      "Bash(sed *)",
+      "Bash(sort *)",
+      "Bash(uniq *)",
+      "Bash(wc *)",
+      "Bash(hexdump *)",
+      "Bash(xxd *)",
+
+      "Bash(python3 /home/*/sift-autonomous-agent/agent/orchestrator.py *)",
+      "Bash(python3 /home/*/sift-autonomous-agent/agent/report_generator.py *)",
+
+      "Edit(./analysis/*)",
+      "Edit(./reports/*)",
+      "Edit(./exports/*)"
+    ],
+
+    "defaultMode": "acceptEdits",
+    "ask": [],
+
+    "deny": [
+      "Read(./secrets/**)",
+      "Read(./**/*.key)",
+      "Read(./**/*.pem)",
+      "Read(./**/*.credential*)",
+
+      "Bash(rm *)",
+      "Bash(rmdir *)",
+      "Bash(dd *)",
+      "Bash(wget *)",
+      "Bash(curl *)",
+      "Bash(ssh *)",
+      "Bash(scp *)",
+      "Bash(nc *)",
+      "Bash(ncat *)",
+      "Bash(netcat *)",
+      "Bash(mkfs *)",
+      "Bash(fdisk *)",
+      "Bash(parted *)",
+      "Bash(shred *)",
+      "Bash(wipe *)",
+      "Bash(chmod 777 *)",
+      "Bash(chown root *)",
+
+      "WebFetch"
+    ]
+  },
+
+  "mcpServers": {
+    "sift-sentinel": {
+      "command": "python3",
+      "args": ["~/.claude/mcp_server/server.py"],
+      "transport": "stdio"
+    }
+  },
+
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "mkdir -p ./analysis/ && echo \"$(date -u '+%Y-%m-%dT%H:%M:%SZ'): Session complete. $CONVERSATION_SUMMARY\" >> ./analysis/forensic_audit.log"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "mkdir -p ./analysis/ && echo \"$(date -u '+%Y-%m-%dT%H:%M:%SZ'): TOOL_USE Bash: $TOOL_INPUT\" >> ./analysis/forensic_audit.log"
+          }
+        ]
+      }
+    ]
+  }
+}

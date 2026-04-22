@@ -66,20 +66,29 @@ MEMORY_BASELINER: str = "python3 /opt/memory-baseliner/baseline.py"
 # ---------------------------------------------------------------------------
 
 def _is_evidence_path(path: str) -> bool:
-    """Return True if path starts with one of the allowed evidence directories.
+    """Return True if path resolves to one of the allowed evidence directories.
 
-    Checks both the raw path string (for Linux absolute paths like /cases/)
-    and the OS-resolved abspath (for relative paths and symlinks). The raw
-    string check is necessary because on Windows os.path.abspath('/cases/x')
-    resolves to 'C:\\cases\\x', which would otherwise fail the prefix test
-    even though the intent is correct for SIFT (Linux) deployment.
+    Always normalizes the path first (collapses ../ traversals) before
+    checking prefixes. On Linux (SIFT), os.path.abspath resolves correctly.
+    On Windows (test environment), abspath('/cases/x') -> 'C:\\cases\\x',
+    so we also check the posixpath-normalized version of the raw string to
+    preserve correct behavior without allowing traversal.
     """
-    # Normalize separators for cross-platform comparison
-    norm_path = path.replace("\\", "/")
+    import posixpath
+
+    # 1. OS-native abspath — correct on Linux/SIFT, may add drive letter on Windows
     abs_path = os.path.abspath(path).replace("\\", "/")
+
+    # 2. POSIX normpath of the raw string — collapses ../ without adding drive letter
+    #    e.g. /cases/../etc/passwd -> /etc/passwd (correctly rejected)
+    #         /cases/srl/rd01.E01  -> /cases/srl/rd01.E01 (correctly accepted)
+    posix_norm = posixpath.normpath(path.replace("\\", "/"))
+
     for d in EVIDENCE_DIRS:
         prefix = d.rstrip("/")
-        if norm_path.startswith(prefix) or abs_path.startswith(prefix):
+        # Both paths must clear the traversal check — use posix_norm as the
+        # canonical check; abs_path is the fallback for relative paths on Linux
+        if posix_norm.startswith(prefix) or abs_path.startswith(prefix):
             return True
     return False
 

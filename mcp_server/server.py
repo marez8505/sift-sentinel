@@ -66,10 +66,20 @@ MEMORY_BASELINER: str = "python3 /opt/memory-baseliner/baseline.py"
 # ---------------------------------------------------------------------------
 
 def _is_evidence_path(path: str) -> bool:
-    """Return True if path starts with one of the allowed evidence directories."""
-    abs_path = os.path.abspath(path)
+    """Return True if path starts with one of the allowed evidence directories.
+
+    Checks both the raw path string (for Linux absolute paths like /cases/)
+    and the OS-resolved abspath (for relative paths and symlinks). The raw
+    string check is necessary because on Windows os.path.abspath('/cases/x')
+    resolves to 'C:\\cases\\x', which would otherwise fail the prefix test
+    even though the intent is correct for SIFT (Linux) deployment.
+    """
+    # Normalize separators for cross-platform comparison
+    norm_path = path.replace("\\", "/")
+    abs_path = os.path.abspath(path).replace("\\", "/")
     for d in EVIDENCE_DIRS:
-        if abs_path.startswith(d.rstrip("/")):
+        prefix = d.rstrip("/")
+        if norm_path.startswith(prefix) or abs_path.startswith(prefix):
             return True
     return False
 

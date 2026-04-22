@@ -105,7 +105,7 @@ class HallucinationDetector:
             "Specific registry value claim without RECmd/volatility registry plugin",
         ),
         (
-            re.compile(r"PID\s*[=:]\s*\d+|process ID\s+\d+|\(PID\s+\d+\)", re.I),
+            re.compile(r"PID\s*[=:]?\s*\d+|process ID\s+\d+|\(PID\s+\d+\)", re.I),
             re.compile(r"pslist|psscan|pstree|tasklist|ps aux|procexp", re.I),
             "Specific PID referenced without process listing tool being run",
         ),
